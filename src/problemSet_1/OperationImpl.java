@@ -11,6 +11,7 @@ public class OperationImpl<T> implements IOperation {
 
     OperationImpl() {
 
+        // Test data for bellmanFordSingleSourceShortestPath
         graph = new Graph<T>(true);
         Vertex<T> v0 = new Vertex<T>((T) new Integer(0));
         Vertex<T> v1 = new Vertex<T>((T) new Integer(1));
@@ -440,6 +441,110 @@ public class OperationImpl<T> implements IOperation {
         });
     }
 
+    // Time Complexity -- O(n ^ 4)
+    @Override
+    public void travelingSalesManProblem_HeldKarp(){
+        int[][] weightMatrix = {
+                {0, 1, 15, 6},
+                {2, 0, 7, 3},
+                {9, 6, 0, 12},
+                {10, 4, 8, 0}
+        };
+
+        List<Set<Integer>> subSetsList = new ArrayList<>();
+        subSetsList.add(new HashSet<>()); // EmptySet
+        // Time complexity -- O(n ^ 3)
+        for (int len = 1; len < weightMatrix.length-1; len++) {
+            for (int i = 1; i < weightMatrix.length; i++) {
+                Set<Integer> set = new HashSet<>();
+                for (int j = i; j < i+len; j++) set.add(j < weightMatrix.length ? j :  j % weightMatrix.length +1);
+                subSetsList.add(set);
+            }
+        }
+        // Include all values except 0
+        Set<Integer> set = new HashSet<>(weightMatrix.length-1);
+        for (int i = 1; i < weightMatrix.length; i++) set.add(i);
+        subSetsList.add(set);
+
+        // Value of Map ~~ index 0 holds cost and index 1 holds parentIndex
+        Map<Cell, int[]> map = new HashMap<>();
+        ListIterator<Set<Integer>> iterator = subSetsList.listIterator();
+        // Time complexity -- O(n ^ 4)
+        while (iterator.hasNext()) {
+            Set<Integer> currentSet = iterator.next();
+            // Time Complexity -- O(n ^ 2)
+            for (int i = 0; i < weightMatrix.length; i++) {
+                if (currentSet.contains(i)) continue;
+                // i == 0 is only valid for set having all rest of the indexes
+                if (i == 0 && currentSet.size() < weightMatrix.length-1) continue;
+                if (currentSet.isEmpty()) {
+                    map.put(new Cell(i, currentSet), new int[]{weightMatrix[0][i], 0});
+                    continue;
+                }
+
+                int cost = Integer.MAX_VALUE;
+                int parent = -1;
+                for (Integer k : currentSet) {
+                    Set<Integer> newSet = new HashSet<>(currentSet.size() * 4/3);
+                    newSet.addAll(currentSet);
+                    newSet.remove(k);
+                    int newCost = map.get(new Cell(k, newSet))[0] + weightMatrix[k][i];
+                    if (newCost < cost) {
+                        cost = newCost;
+                        parent = k;
+                    }
+                }
+
+                map.put(new Cell(i, currentSet), new int[]{cost, parent});
+            }
+        }
+
+        System.out.println("Min Cost : " + map.get(new Cell(0, set))[0]);
+        printPath(map, set, 0);
+    }
+
+    // Time Complexity -- O(n)
+    private void printPath(Map<Cell, int[]> map, Set<Integer> set, int parent) {
+        int[] ar = map.get(new Cell(parent, set));
+        if (ar == null) return;
+        int currentParent = ar[1];
+        if (currentParent != 0) {
+            set.remove(currentParent);
+            printPath(map, set, currentParent);
+        }
+        set.add(parent);
+        System.out.print(" >> " + parent + " ");
+    }
+
+    private static class Cell {
+        private Integer destinationIndex;
+        private Set<Integer> pathSet;
+
+        Cell(){}
+        Cell(Integer destinationIndex, Set pathSet) {
+            this.destinationIndex = destinationIndex;
+            this.pathSet = pathSet;
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (!(o instanceof Cell)) return false;
+
+            Cell cell = (Cell) o;
+
+            if (!destinationIndex.equals(cell.destinationIndex)) return false;
+            return pathSet != null ? pathSet.equals(cell.pathSet) : cell.pathSet == null;
+        }
+
+        @Override
+        public int hashCode() {
+            int result = destinationIndex.hashCode();
+            result = 31 * result + (pathSet != null ? pathSet.hashCode() : 0);
+            return result;
+        }
+    }
+
     public static void main(String[] a){
         OperationImpl<Character> operation = new OperationImpl<Character>();
 /*        List<Vertex<Character>> vertices = operation.dfs();
@@ -452,7 +557,7 @@ public class OperationImpl<T> implements IOperation {
             System.out.println(stack.pop().value);
         }*/
 
-        operation.bellmanFordSingleSourceShortestPath();
+        operation.travelingSalesManProblem_HeldKarp();
 
         //operation.test();
 

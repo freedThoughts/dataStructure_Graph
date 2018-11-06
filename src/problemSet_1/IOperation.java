@@ -15,4 +15,5 @@ public interface IOperation<T> {
     void kruskalMinimumSpanningTree();
     void prismMinimumSpanningTree();
     void bellmanFordSingleSourceShortestPath();
+    void travelingSalesManProblem_HeldKarp();
 }
