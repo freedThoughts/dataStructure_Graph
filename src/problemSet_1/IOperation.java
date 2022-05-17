@@ -11,6 +11,7 @@ public interface IOperation<T> {
     List<Vertex<T>> bfs();
     Stack<Vertex<T>> topologySort();
     Stack<Vertex<T>> topologySort2();
+    void minStepTopoSort();
     void dijkstraShortestPath();
     void kruskalMinimumSpanningTree();
     void prismMinimumSpanningTree();

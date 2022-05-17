@@ -10,7 +10,7 @@ import java.util.List;
 public class Vertex<T> {
     public T value;
     public boolean isVisited;
-    public List<Vertex<T>> neighbours = new ArrayList<>();
+    public List<Vertex<T>> neighbours = new ArrayList<Vertex<T>>();
     public List<Edge<T>> edges = new ArrayList<>();
 
     // Disjoint set attributes

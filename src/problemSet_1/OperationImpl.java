@@ -10,6 +10,7 @@ public class OperationImpl<T> implements IOperation {
     DisjointSet<T> disjointSet;
 
     OperationImpl() {
+/*
 
         // Test data for bellmanFordSingleSourceShortestPath
         graph = new Graph<T>(true);
@@ -33,6 +34,7 @@ public class OperationImpl<T> implements IOperation {
         graph.addEdge(v3, v4, 2);
         graph.addEdge(v4, v3, 1);
 
+*/
 
 /*
         // Prism's Minimum Spanning Tree -- test data
@@ -113,8 +115,8 @@ public class OperationImpl<T> implements IOperation {
         graph.addEdge(A, E, 2);
         graph.addEdge(E, F, 3);
         graph.addEdge(D, F, 2);*/
-
 /*
+
         //For BFS/ DFS  -- test data
         graph = new Graph<T>();
         Vertex<T> A = new Vertex<T>((T) new Character('A'));
@@ -151,9 +153,9 @@ public class OperationImpl<T> implements IOperation {
         F.neighbours.add(E);
         G.neighbours.add(E);
         H.neighbours.add(B);
-        H.neighbours.add(E);*/
+        H.neighbours.add(E);
+*/
 
-/*
         // For TopologySort   -- test Data
         graph = new Graph<T>(true);
         Vertex<T> A = new Vertex<T>((T) new Character('A'));
@@ -180,8 +182,119 @@ public class OperationImpl<T> implements IOperation {
         graph.addEdge(D, F);
         graph.addEdge(E, F);
         graph.addEdge(F, G);
-        graph.addEdge(E, H);*/
+        graph.addEdge(E, H);
 
+    }
+
+
+    public Stack<Vertex<T>> topologySort1() {
+        Stack<Vertex<T>> outputStack = new Stack<>();
+        Set<Vertex<T>> visitedVertices = new HashSet<>();
+        Stack<Vertex<T>> currentStack = new Stack<>();
+
+        for (Vertex<T> v : graph.vertexList) {
+            if (visitedVertices.contains(v))
+                continue;
+            visitedVertices.add(v);
+            currentStack.push(v);
+            while (!currentStack.isEmpty()) {
+                Optional<Vertex<T>> neighbourOptional = currentStack.peek().neighbours.stream().filter(v1 -> !visitedVertices.contains(v1)).findFirst();
+                if (neighbourOptional.isPresent()) {
+                    Vertex<T> innerVertex = neighbourOptional.get();
+                    visitedVertices.add(innerVertex);
+                    currentStack.push(innerVertex);
+                    continue;
+                }
+                outputStack.push(currentStack.pop());
+            }
+        }
+        return outputStack;
+    }
+
+    List<Vertex<T>> bfs1() {
+        List<Vertex<T>> output = new ArrayList<>(graph.vertexList.size());
+        Queue<Vertex> queue = new LinkedList<>();
+        Set<Vertex> visitedVertices = new HashSet<>(graph.vertexList.size() * 2);
+
+        Vertex vertex = graph.vertexList.get(0);
+        queue.add(vertex);
+        visitedVertices.add(vertex);
+        output.add(vertex);
+
+
+        while (!queue.isEmpty()) {
+            List<Vertex> neighbours = queue.poll().neighbours;
+            for (Vertex neighbour : neighbours) {
+                if (visitedVertices.contains(neighbour))
+                    continue;
+                visitedVertices.add(neighbour);
+                queue.add(neighbour);
+                output.add(neighbour);
+            }
+        }
+
+        return output;
+    }
+
+    List<Vertex<T>> dfs1() {
+        Stack<Vertex> stack =  new Stack<>();
+        List<Vertex<T>> output = new ArrayList<>();
+        Set<Vertex<T>> visitedVertices = new HashSet<>();
+
+        Vertex<T> vertex = graph.vertexList.get(0);
+        output.add(vertex);
+        visitedVertices.add(vertex);
+        stack.push(null);
+        stack.push(vertex);
+
+
+        while (!stack.isEmpty()) {
+            Optional<Vertex<T>> optional = vertex.neighbours.stream().filter(v -> !visitedVertices.contains(v)).findFirst();
+
+            if (optional.isPresent()) {
+                Vertex neighbour = optional.get();
+                visitedVertices.add(neighbour);
+                stack.push(neighbour);
+                output.add(neighbour);
+                vertex = neighbour;
+                continue;
+            }
+
+            vertex = stack.pop();
+        }
+
+        return output;
+    }
+
+
+    public List<Vertex<T>> dfs2() {
+        List<Vertex<T>> dfs =  new ArrayList<>(graph.vertexList.size());
+        Stack<Vertex<T>> stack = new Stack();
+        Vertex<T> vertex = graph.vertexList.get(0);
+        Set<Vertex<T>> visitedSet = new HashSet<>();
+
+        while (vertex != null || !stack.isEmpty()) {
+            if (vertex == null) {
+                // Remove from stack only when no neighbour of stack top left to explore. Otherwise just peek.
+                vertex = stack.peek();
+            }
+            if (!visitedSet.contains(vertex)) {
+                dfs.add(vertex);
+                visitedSet.add(vertex);
+                stack.push(vertex);
+            }
+
+            vertex = vertex.neighbours.stream()
+                    .filter(vertex1 -> !visitedSet.contains(vertex1))
+                    .findFirst()
+                    .orElseGet( ()-> {
+                        // Remove from stack only when no neighbour of stack top left to explore
+                        stack.pop();
+                        return null;
+                    });
+        }
+
+        return dfs;
     }
 
     @Override
@@ -274,6 +387,46 @@ public class OperationImpl<T> implements IOperation {
             topologySortMethod(v, resultStack, visitedVertices);});
         resultStack.push(vertex);
     }
+
+
+    @Override
+    public void minStepTopoSort() {
+
+        Map<Vertex<T>, Integer> vertexHeightMap = new HashMap<>(graph.vertexList.size() * 2);
+        graph.vertexList.stream()
+                .filter(v -> !vertexHeightMap.containsKey(v))
+                .forEach(v -> minTopoSort(v, vertexHeightMap));
+
+        Map<Integer, Set<T>> heightDataMap = new TreeMap<>((Integer::compareTo));
+
+        vertexHeightMap.entrySet()
+                .forEach(e -> {
+                    Set<T> vertexSet = heightDataMap.get(e.getValue());
+                    if (vertexSet == null) {
+                        vertexSet = new HashSet<>();
+                        heightDataMap.put(e.getValue(), vertexSet);
+                    }
+                    vertexSet.add(e.getKey().value);
+                });
+
+        heightDataMap.entrySet().forEach(
+                e -> System.out.println(e.getValue().toString())
+        );
+    }
+
+    private int minTopoSort(Vertex<T> vertex, Map<Vertex<T>, Integer> vertexHeightMap) {
+        if (vertexHeightMap.containsKey(vertex)) {
+            return vertexHeightMap.get(vertex);
+        }
+        int height = 0;
+        for (Vertex<T> v : vertex.neighbours){
+            height = Math.max(height, minTopoSort(v, vertexHeightMap));
+        }
+        height++;
+        vertexHeightMap.put(vertex, height);
+        return height;
+    }
+
 
     @Override
     public void dijkstraShortestPath(){
@@ -547,6 +700,11 @@ public class OperationImpl<T> implements IOperation {
 
     public static void main(String[] a){
         OperationImpl<Character> operation = new OperationImpl<Character>();
+        operation.minStepTopoSort();
+        //Stack<Vertex<Character>> output = operation.topologySort1();
+        //while (!output.isEmpty())
+        //    System.out.println(output.pop().value);
+
 /*        List<Vertex<Character>> vertices = operation.dfs();
         ListIterator<Vertex<Character>> listIterator = vertices.listIterator();
         while (listIterator.hasNext())
@@ -557,7 +715,7 @@ public class OperationImpl<T> implements IOperation {
             System.out.println(stack.pop().value);
         }*/
 
-        operation.travelingSalesManProblem_HeldKarp();
+        //operation.travelingSalesManProblem_HeldKarp();
 
         //operation.test();
 
